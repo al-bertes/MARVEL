@@ -1,61 +1,121 @@
 import './charInfo.scss';
-import thor from '../../resources/img/thor.jpeg';
+import MarvelService from '../../services/MarvelService';
+import React from 'react';
+import Skeleton from '../skeleton/Skeleton';
+import Spinner from '../randomChar/Spinner';
+import PropTypes from 'prop-types';
 
-const CharInfo = () => {
-    return (
-        <div className="char__info">
+class CharInfo extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            charData: { 
+              name: null,
+              thumbnail: null,
+              homepage: null,
+              wiki: null,
+              description: null,
+              comics: null
+            },
+           processState: 'waiting'
+        }
+    }
+    marverlServer = new MarvelService();
+
+    componentDidMount () {
+        this.updateInfo();
+    }
+    componentDidUpdate (prevProps) {
+        if (this.props.charId !== prevProps.charId) {
+            this.updateInfo()
+        }
+    }
+    
+
+    onLoadedInfoCard = (data) => {
+        this.setState({charData: data, processState: 'fullfiled'})
+    };
+
+    updateInfo = () => {
+        if (!this.props.charId) {
+            return;
+        }
+        this.setState({processState: 'loading'})
+        this.marverlServer.getCharacter(this.props.charId)
+                          .then(this.onLoadedInfoCard)
+                          .catch(this.setState({processState: 'error'}))
+
+    }
+
+    renderCardInfo = ({ name, description, thumbnail, homepage, wiki, comics }) => {
+
+        const listComics = comics.map((item, i) => {
+            if (i > 9) {
+                // eslint-disable-next-line array-callback-return
+                return;
+            }
+            return (
+                <a key={i} href={item.resourceURI}>
+                    <li key={i} className="char__comics-item" >
+                    {item.name}
+                 </li>
+                </a>
+                )
+            })
+            const styleForDisableImg = (thumbnail.endsWith('image_not_available.jpg')) ? 'contain': 'cover';
+    
+            const styleImg = {
+                objectFit: styleForDisableImg
+            }
+        return (
+            <> 
             <div className="char__basics">
-                <img src={thor} alt="abyss"/>
+                <img src={thumbnail} alt="abyss" style={styleImg}/>
                 <div>
-                    <div className="char__info-name">thor</div>
+                    <div className="char__info-name">{name}</div>
                     <div className="char__btns">
-                        <a href="#" className="button button__main">
+                        <a href={homepage} className="button button__main">
                             <div className="inner">homepage</div>
                         </a>
-                        <a href="#" className="button button__secondary">
+                        <a href={wiki} className="button button__secondary">
                             <div className="inner">Wiki</div>
                         </a>
                     </div>
                 </div>
             </div>
             <div className="char__descr">
-                In Norse mythology, Loki is a god or jötunn (or both). Loki is the son of Fárbauti and Laufey, and the brother of Helblindi and Býleistr. By the jötunn Angrboða, Loki is the father of Hel, the wolf Fenrir, and the world serpent Jörmungandr. By Sigyn, Loki is the father of Nari and/or Narfi and with the stallion Svaðilfari as the father, Loki gave birth—in the form of a mare—to the eight-legged horse Sleipnir. In addition, Loki is referred to as the father of Váli in the Prose Edda.
+                {description}
             </div>
             <div className="char__comics">Comics:</div>
-            <ul className="char__comics-list">
-                <li className="char__comics-item">
-                    All-Winners Squad: Band of Heroes (2011) #3
-                </li>
-                <li className="char__comics-item">
-                    Alpha Flight (1983) #50
-                </li>
-                <li className="char__comics-item">
-                    Amazing Spider-Man (1999) #503
-                </li>
-                <li className="char__comics-item">
-                    Amazing Spider-Man (1999) #504
-                </li>
-                <li className="char__comics-item">
-                    AMAZING SPIDER-MAN VOL. 7: BOOK OF EZEKIEL TPB (Trade Paperback)
-                </li>
-                <li className="char__comics-item">
-                    Amazing-Spider-Man: Worldwide Vol. 8 (Trade Paperback)
-                </li>
-                <li className="char__comics-item">
-                    Asgardians Of The Galaxy Vol. 2: War Of The Realms (Trade Paperback)
-                </li>
-                <li className="char__comics-item">
-                    Vengeance (2011) #4
-                </li>
-                <li className="char__comics-item">
-                    Avengers (1963) #1
-                </li>
-                <li className="char__comics-item">
-                    Avengers (1996) #1
-                </li>
-            </ul>
-        </div>
-    )
+            
+                {(comics.length > 0) ? <ul className="char__comics-list">
+                  {listComics}  
+                </ul> : 'There is no comics with this character'}
+            </>
+        )
+    }
+    renderInfo = (processState, char) => {
+        switch(processState) {
+            case('waiting'):
+                return <Skeleton/>;
+            case('fullfiled'):
+                return this.renderCardInfo(char);
+            case('error'):
+                return <Spinner/>
+            default:
+                return null;
+        }
+    }
+    render() {
+        const { processState, charData } = this.state;
+        return (
+            <div className="char__info">
+                {this.renderInfo(processState, charData)}
+            </div>
+        )
+    }
 }
-
+CharInfo.propTypes = {
+    charId: PropTypes.number
+}
 export default CharInfo;

@@ -5,7 +5,7 @@ class MarvelService {
   _configurationApi = {
     apiBaseUrl:"https://gateway.marvel.com:443/v1/public/",
     apiKey: "apikey=75ae9f3371a58cbb72a0d9a3f9f2f281",
-    limitItems: '9',
+    limitItems: 9,
     offsetItems: '210'
   }
   
@@ -18,8 +18,8 @@ class MarvelService {
     return await axios.get(url);
   }
 
-  getAllCharacters = async() => {
-    const respons = await this.getResource(`${this.configurationApi.apiBaseUrl}characters?limit=${this.configurationApi.limitItems}&offset=${this.configurationApi.offsetItems}&${this.configurationApi.apiKey}`)
+  getAllCharacters = async(offset = this.configurationApi.offsetItems) => {
+    const respons = await this.getResource(`${this.configurationApi.apiBaseUrl}characters?limit=${this.configurationApi.limitItems}&offset=${offset}&${this.configurationApi.apiKey}`)
     return respons.data.data.results.map(item => this._transformDataCharacter(item));
   }
 
@@ -31,11 +31,12 @@ class MarvelService {
   _transformDataCharacter = (response) => {
     return {
       name: response.name,
-      id: _.uniqueId(),
+      id: response.id,
       description: response.description,
       thumbnail: `${response.thumbnail.path}.${response.thumbnail.extension}`,
       homepage: response.urls[0].url,
-      wiki: response.urls[1].url
+      wiki: response.urls[1].url,
+      comics: response.comics.items
     }
   }
 }
