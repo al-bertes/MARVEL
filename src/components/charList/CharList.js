@@ -12,6 +12,7 @@ class CharList extends React.Component {
         offset: 210,
         processState: 'filling'  // filling, error, fulfilled
     }
+    
   }
   
   marverlServer = new MarvelService(this.configurationUpdate);
@@ -30,17 +31,35 @@ class CharList extends React.Component {
   updateList = () => {
     this.marverlServer.getAllCharacters(this.state.offset).then(this.onLoadedList);
   }
-  
+  itemRefs = [];
+
+  setRef = (ref) => {
+      this.itemRefs.push(ref);
+  }
+
+  focusOnItem = (id) => {
+      this.itemRefs.forEach(item => item.classList.remove('char__item_selected'));
+      this.itemRefs[id].classList.add('char__item_selected');
+      this.itemRefs[id].focus();
+  }
+
   renderList = ({charList}) => {
     const { setActiveCard } = this.props;
-    return charList.map(({thumbnail, id, name}) => {
+    return charList.map(({thumbnail, id, name}, index) => {
         const styleForDisableImg = (thumbnail.endsWith('image_not_available.jpg')) ? 'contain': 'cover';
     
         const styleImg = {
             objectFit: styleForDisableImg
         }
         return (
-            <li ref={this.props.propsRef} key={id} className="char__item" onClick={() => setActiveCard(id)}>
+            <li 
+                tabIndex={0}
+                ref={this.setRef} 
+                key={id} className="char__item" 
+                onClick={() => {
+                  setActiveCard(id); 
+                  this.focusOnItem(index);
+                }}>
               <img src={thumbnail} alt="abyss" style={styleImg}/>
               <div className="char__name">{name}</div>
             </li>
