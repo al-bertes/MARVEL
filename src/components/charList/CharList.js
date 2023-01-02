@@ -1,88 +1,72 @@
 import './charList.scss';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import MarvelService from '../../services/MarvelService';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 
-class CharList extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-        charList: [],
-        offset: 210,
-        processState: 'filling'  // filling, error, fulfilled
-    }
-    
-  }
-  
-  marverlServer = new MarvelService(this.configurationUpdate);
+function CharList(props) {
+  const [charList, setCharList] = useState([]);
+  const [offset, setOffset] = useState(210);
 
-  componentDidMount () {
-    this.updateList();
+  const marverlServer = new MarvelService();
 
-  } 
+  useEffect(() => {
+    updateList();
+  }, []);
 
-  onLoadedList = (response) => {
-    this.setState(({charList, offset}) => {
-      return {charList: [...charList, ...response], offset: offset + 9}
-    })
-    
-  }
-  updateList = () => {
-    this.marverlServer.getAllCharacters(this.state.offset).then(this.onLoadedList);
-  }
-  itemRefs = [];
+  const onLoadedList = (response) => {
+    setCharList((charList) => (charList = [...charList, ...response]));
+    setOffset((offset) => (offset = offset + 9));
+  };
+  const updateList = () => {
+    marverlServer.getAllCharacters(offset).then(onLoadedList);
+  };
+  const itemRefs = useRef([]);
 
-  setRef = (ref) => {
-      this.itemRefs.push(ref);
-  }
+  const focusOnItem = (id) => {
+    itemRefs.current.forEach((item) => item.classList.remove('char__item_selected'));
+    itemRefs.current[id].classList.add('char__item_selected');
+    itemRefs.current[id].focus();
+  };
 
-  focusOnItem = (id) => {
-      this.itemRefs.forEach(item => item.classList.remove('char__item_selected'));
-      this.itemRefs[id].classList.add('char__item_selected');
-      this.itemRefs[id].focus();
-  }
+  const renderList = (charList) => {
+    const { setActiveCard } = props;
+    return charList.map(({ thumbnail, id, name }, index) => {
+      const styleForDisableImg = thumbnail.endsWith('image_not_available.jpg') ? 'contain' : 'cover';
 
-  renderList = ({charList}) => {
-    const { setActiveCard } = this.props;
-    return charList.map(({thumbnail, id, name}, index) => {
-        const styleForDisableImg = (thumbnail.endsWith('image_not_available.jpg')) ? 'contain': 'cover';
-    
-        const styleImg = {
-            objectFit: styleForDisableImg
-        }
-        return (
-            <li 
-                tabIndex={0}
-                ref={this.setRef} 
-                key={id} className="char__item" 
-                onClick={() => {
-                  setActiveCard(id); 
-                  this.focusOnItem(index);
-                }}>
-              <img src={thumbnail} alt="abyss" style={styleImg}/>
-              <div className="char__name">{name}</div>
-            </li>
-        )
-    })
-  }
-  render () {
-    
-    return (
-        <div className="char__list">
-            <ul className="char__grid">
-                {this.renderList(this.state)}
-            </ul>
-            <button onClick={this.updateList} className="button button__main button__long">
-                <div className="inner">load more</div>
-            </button>
-        </div>
-    )
-  }
+      const styleImg = {
+        objectFit: styleForDisableImg,
+      };
+      return (
+        <li
+          tabIndex={0}
+          ref={(el) => (itemRefs.current[index] = el)}
+          key={id}
+          className="char__item"
+          onClick={() => {
+            setActiveCard(id);
+            focusOnItem(index);
+          }}
+        >
+          <img src={thumbnail} alt="abyss" style={styleImg} />
+          <div className="char__name">{name}</div>
+        </li>
+      );
+    });
+  };
 
+  return (
+    <div className="char__list">
+      <ul className="char__grid">{renderList(charList)}</ul>
+      <button onClick={updateList} className="button button__main button__long">
+        <div className="inner">load more</div>
+      </button>
+    </div>
+  );
 }
+
 CharList.propTypes = {
-  setActiveCard: PropTypes.func
-}
+  setActiveCard: PropTypes.func,
+};
 
 export default CharList;
