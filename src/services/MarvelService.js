@@ -1,36 +1,48 @@
-import axios from 'axios';
-import _ from 'lodash';
-class MarvelService {
-  _configurationApi = {
-    apiBaseUrl: 'https://gateway.marvel.com:443/v1/public/',
+import { useHttp } from '../hooks/http.hook';
+
+const useMarvelService = () => {
+  const { processState, request } = useHttp();
+
+  const _configurationApi = {
+    apiBaseUrl: 'https://gateway.marvel.com:443/v1/public/', 
+    asdf: 'https://gateway.marvel.com:443/v1/public/comics?limit=8&apikey=75ae9f3371a58cbb72a0d9a3f9f2f281',
     apiKey: 'apikey=75ae9f3371a58cbb72a0d9a3f9f2f281',
     limitItems: 9,
     offsetItems: '210',
   };
 
-  constructor(configurationApi = {}) {
-    this.configurationApi = { ...this._configurationApi, ...configurationApi };
+  const getAllCharacters = async (offset = _configurationApi.offsetItems) => {
+    const respons = await request(
+      `${_configurationApi.apiBaseUrl}characters?limit=9&offset=${offset}&${_configurationApi.apiKey}`,
+    );
+    return respons.data.data.results.map(_transformDataCharacter);
+  };
+
+  const getCharacter = async (id) => {
+    const response = await request(`${_configurationApi.apiBaseUrl}characters/${id}?${_configurationApi.apiKey}`);
+    return _transformDataCharacter(response.data.data.results[0]);
+  };
+  const getCommics = async (offset = _configurationApi.offsetItems, limit = 8) => {
+    const respons = await request(`${_configurationApi.apiBaseUrl}comics?limit=${limit}&offset=${offset}&${_configurationApi.apiKey}`);
+    return respons.data.data.results.map((item) => _transformDataComics(item));
   }
 
-  getResource = async (url) => {
-    return await axios.get(url);
-  };
+  const getSingleCommics = async (id) => {
+    const response = await request(`${_configurationApi.apiBaseUrl}comics/${id}?${_configurationApi.apiKey}`);
+    return _transformDataComics(response.data.data.results[0]);
+  }
 
-  getAllCharacters = async (offset = this.configurationApi.offsetItems) => {
-    const respons = await this.getResource(
-      `${this.configurationApi.apiBaseUrl}characters?limit=${this.configurationApi.limitItems}&offset=${offset}&${this.configurationApi.apiKey}`,
-    );
-    return respons.data.data.results.map((item) => this._transformDataCharacter(item));
-  };
+  const _transformDataComics = (response) => {
+    return {
+      thumbnail: `${response.thumbnail.path}.${response.thumbnail.extension}`,
+      id: response.id,
+      prices: response.prices[0].price,
+      title: response.title,
+      pageCount: response.pageCount,
+    }
+  }
 
-  getCharacter = async (id) => {
-    const response = await this.getResource(
-      `${this.configurationApi.apiBaseUrl}characters/${id}?${this.configurationApi.apiKey}`,
-    );
-    return this._transformDataCharacter(response.data.data.results[0]);
-  };
-
-  _transformDataCharacter = (response) => {
+  const _transformDataCharacter = (response) => {
     return {
       name: response.name,
       id: response.id,
@@ -41,6 +53,7 @@ class MarvelService {
       comics: response.comics.items,
     };
   };
+  return { processState, getAllCharacters, getCharacter, getCommics, getSingleCommics };
 }
 
-export default MarvelService;
+export default useMarvelService;

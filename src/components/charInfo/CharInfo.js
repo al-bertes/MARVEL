@@ -1,22 +1,21 @@
 import './charInfo.scss';
-import MarvelService from '../../services/MarvelService';
+import useMarvelService from '../../services/MarvelService';
 import React, { useEffect, useState } from 'react';
 import Skeleton from '../skeleton/Skeleton';
 import Spinner from '../randomChar/Spinner';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 
 function CharInfo({ charId }) {
   const [charData, setCharData] = useState({
-    name: null,
-    thumbnail: null,
-    homepage: null,
-    wiki: null,
-    description: null,
-    comics: null,
+    name: '',
+    description: '',
+    thumbnail: '',
+    homepage: '',
+    wiki: '',
+    comics: []
   });
-  const [processState, setProcessState] = useState('waiting');
-
-  const marverlServer = new MarvelService();
+  const { processState, getCharacter } = useMarvelService();
 
   useEffect(() => {
     updateInfo();
@@ -24,29 +23,29 @@ function CharInfo({ charId }) {
 
   const onLoadedInfoCard = (data) => {
     setCharData(data);
-    setProcessState('fullfiled');
   };
 
   const updateInfo = () => {
     if (!charId) {
       return;
     }
-    setProcessState('loading');
-    marverlServer.getCharacter(charId).then(onLoadedInfoCard).catch(setProcessState('error'));
+    getCharacter(charId).then(onLoadedInfoCard);
   };
 
   const renderCardInfo = ({ name, description, thumbnail, homepage, wiki, comics }) => {
-    const listComics = comics.map((item, i) => {
+    const listComics = comics.map(({resourceURI}, i) => {
       if (i > 9) {
         // eslint-disable-next-line array-callback-return
         return;
       }
+      const pathToComic = resourceURI.split('/');
+    
       return (
-        <a key={i} href={item.resourceURI}>
+        <Link to={`/comics/${pathToComic[pathToComic.length - 1]}`} key={i} href={resourceURI}>
           <li key={i} className="char__comics-item">
-            {item.name}
+            {name}
           </li>
-        </a>
+        </Link>
       );
     });
     const styleForDisableImg = thumbnail.endsWith('image_not_available.jpg') ? 'contain' : 'cover';
@@ -86,7 +85,7 @@ function CharInfo({ charId }) {
     switch (processState) {
       case 'waiting':
         return <Skeleton />;
-      case 'fullfiled':
+      case 'loaded':
         return renderCardInfo(char);
       case 'error':
         return <Spinner />;
@@ -102,3 +101,4 @@ CharInfo.propTypes = {
   charId: PropTypes.number,
 };
 export default CharInfo;
+

@@ -1,25 +1,26 @@
 import './charList.scss';
 import React, { useEffect, useRef, useState } from 'react';
-import MarvelService from '../../services/MarvelService';
+import useMarvelService from '../../services/MarvelService';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 
 function CharList(props) {
   const [charList, setCharList] = useState([]);
   const [offset, setOffset] = useState(210);
+  
 
-  const marverlServer = new MarvelService();
+  const { getAllCharacters} =  useMarvelService();
 
   useEffect(() => {
-    updateList();
+    updateList(offset);
   }, []);
 
   const onLoadedList = (response) => {
     setCharList((charList) => (charList = [...charList, ...response]));
-    setOffset((offset) => (offset = offset + 9));
+    setOffset(offset => offset + 9);
   };
-  const updateList = () => {
-    marverlServer.getAllCharacters(offset).then(onLoadedList);
+  const updateList = (offset) => {
+    getAllCharacters(offset).then(onLoadedList);
   };
   const itemRefs = useRef([]);
 
@@ -40,8 +41,8 @@ function CharList(props) {
       return (
         <li
           tabIndex={0}
-          ref={(el) => (itemRefs.current[index] = el)}
-          key={id}
+          ref={(el) => itemRefs.current[index] = el}
+          key={index}
           className="char__item"
           onClick={() => {
             setActiveCard(id);

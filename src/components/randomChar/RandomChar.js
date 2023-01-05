@@ -1,51 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import './randomChar.scss';
 import mjolnir from '../../resources/img/mjolnir.png';
-import MarvelService from '../../services/MarvelService';
+import useMarvelService from '../../services/MarvelService';
 import Spinner from './Spinner';
 import Error from '../error/error';
 
 function RandomChar() {
   const [char, setChar] = useState({
-    name: null,
-    description: null,
-    thumbnail: null,
-    homepage: null,
-    wiki: null,
+    name: '',
+    description: '',
+    thumbnail: '',
+    homepage: '',
+    wiki: '',
   });
-  const [processState, setProcessState] = useState('loading');
+  const { processState, getCharacter } = useMarvelService();
 
-  const marverlServer = new MarvelService();
+  useEffect(() => {
+    updateChar();
+  }, []);
 
   const onCharacterLoaded = (data) => {
     setChar(data);
-    setProcessState('loaded');
   };
 
-  const onError = () => {
-    setProcessState('error');
-  };
-  const updataChar = () => {
+  const updateChar = () => {
     const id = Math.floor(Math.random() * (1011400 - 1011000) + 1011000);
-    setProcessState('loading');
-    marverlServer
-      .getCharacter(id)
-      .then((response) => onCharacterLoaded(response))
-      .catch(onError);
+
+    getCharacter(id).then(onCharacterLoaded);
   };
-
-  useEffect(() => {
-    updataChar();
-    const timerId = setInterval(updataChar, 60000);
-
-    return () => {
-      clearInterval(timerId);
-    };
-  }, []);
 
   const renderCharCards = ({ name, description, thumbnail, homepage, wiki }) => {
     const styleForDisableImg = thumbnail.endsWith('image_not_available.jpg') ? 'contain' : 'cover';
-
     const styleImg = {
       objectFit: styleForDisableImg,
     };
@@ -70,14 +55,12 @@ function RandomChar() {
   };
   const renderChar = (processState, char) => {
     switch (processState) {
-      case 'loaded':
-        return renderCharCards(char);
-      case 'error':
-        return <Error />;
       case 'loading':
         return <Spinner />;
+      case 'loaded':
+        return renderCharCards(char);
       default:
-        return <Spinner />;
+        return <Error />;
     }
   };
   return (
@@ -93,7 +76,7 @@ function RandomChar() {
         <p className="randomchar__title">Or choose another one</p>
         <button
           className="button button__main"
-          onClick={updataChar}
+          onClick={updateChar}
           disabled={processState === 'loading' ? true : false}
         >
           <div className="inner">try it</div>

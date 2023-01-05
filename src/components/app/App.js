@@ -1,33 +1,24 @@
 import AppHeader from '../appHeader/AppHeader';
-import RandomChar from '../randomChar/RandomChar';
-import CharList from '../charList/CharList';
-import CharInfo from '../charInfo/CharInfo';
-
-import decoration from '../../resources/img/vision.png';
-import MarvelService from '../../services/MarvelService';
-import React, { useState } from 'react';
-
-const test = new MarvelService();
-test.getAllCharacters().then((res) => console.log(res));
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ComicsPage, MainPage, Page404, SingleComicPage } from '../pages';
 
 function App() {
-  const [active, setActiveId] = useState(null);
-
-  const setActiveCard = (id) => {
-    setActiveId(id);
-  };
 
   return (
-    <div className="app">
-      <AppHeader />
-      <main>
-        <RandomChar />
-        <div className="char__content">
-          <CharList setActiveCard={setActiveCard} /> <CharInfo charId={active} />
-        </div>
-        <img className="bg-decoration" src={decoration} alt="vision" />
-      </main>
-    </div>
+    <Router>
+      <div className="app">
+        <AppHeader/>
+        <main>
+          <Routes>
+          <Route exact path="/" element={<MainPage/>}/>
+            <Route exact path="/comics" element={<ComicsPage/>}/>
+            <Route exact path="/comics/:comicId" element={<SingleComicPage/>}/>
+            <Route exact path="*" element={<Page404/>}/>
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
