@@ -37,7 +37,7 @@ const SingleComicPage = () => {
         </p>
         <p className="single-comic__descr">{comicsData.pageCount}</p>
         <p className="single-comic__descr">Language: en-us</p>
-        <div className="single-comic__price">123$</div>
+        <div className="single-comic__price">{comicsData.prices}$</div>
       </div>
       <Link to="/comics" className="single-comic__back">
         Back to all

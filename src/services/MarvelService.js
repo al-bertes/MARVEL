@@ -31,7 +31,10 @@ const useMarvelService = () => {
     const response = await request(`${_configurationApi.apiBaseUrl}comics/${id}?${_configurationApi.apiKey}`);
     return _transformDataComics(response.data.data.results[0]);
   }
-
+  const getCharacterByName = async (name) => {
+    const res = await request(`${_configurationApi.apiBaseUrl}characters?name=${name}&${_configurationApi.apiKey}`);
+    return res.data.data.results[0];
+}
   const _transformDataComics = (response) => {
     return {
       thumbnail: `${response.thumbnail.path}.${response.thumbnail.extension}`,
@@ -53,7 +56,7 @@ const useMarvelService = () => {
       comics: response.comics.items,
     };
   };
-  return { processState, getAllCharacters, getCharacter, getCommics, getSingleCommics };
+  return { processState, getAllCharacters, getCharacter, getCommics, getSingleCommics, getCharacterByName };
 }
 
 export default useMarvelService;
